@@ -17,7 +17,7 @@ function _dateTime () {
   return '@' + dateformat(new Date(), 'yyyy-MM-dd HH:mm:ss');
 }
 
-function isEmptyObject (obj) {
+function _isEmptyObject (obj) {
   for (var key in obj) {
     return false;
   }
@@ -32,7 +32,7 @@ function hPrintProperties (obj, obj_name, container, level) {
     switch (typeof objElement) {
 
       case 'object':
-        container.innerHTML += `<pre style="padding-left: ${level * 20}px">${key} = ${isEmptyObject(objElement) ? '{}' : objElement}</pre>`;
+        container.innerHTML += `<pre style="padding-left: ${level * 20}px">${key} = ${_isEmptyObject(objElement) ? '{}' : objElement}</pre>`;
         hPrintProperties(objElement, key, container, level + 1);
         break;
       case 'function':
@@ -65,7 +65,7 @@ function hlog (obj, obj_name, filename, line) {
   // -----------------------------------------------------
   switch (typeof obj) {
     case 'object':
-      container.innerHTML += `${obj_name} = ${isEmptyObject(obj) ? '{}' : obj}<br>`;
+      container.innerHTML += `${obj_name} = ${_isEmptyObject(obj) ? '{}' : obj}<br>`;
       hPrintProperties(obj, obj_name, container, 1);
       break;
     case 'function':
@@ -83,7 +83,16 @@ function hlog (obj, obj_name, filename, line) {
 function snlog (obj, obj_name, filename, line) {
   // console.log('\x1b[46m【 ' + filename + ':' + line + ' 】-: 👇\n\x1b[0m' + '\x1b[43m' + ` ${obj_name} = ` + '\x1b[0m' + obj);
 
-  if (typeof obj === 'object') {return printProperties(obj, obj_name, filename, line);}
+  if (Object.prototype.toString.call(obj) === '[object Array Iterator]') {
+    snlog([...obj], `可迭代对象 [...${obj_name}]`, filename, line);
+    return;
+  }
+
+  if (typeof obj === 'object') {
+    printProperties(obj, obj_name, filename, line);
+
+    return;
+  }
 
   let s  = '';
   let s1 = '';
@@ -119,10 +128,18 @@ function printJson (obj, obj_name, filename, line) {
 
 function printProperties (obj, obj_name, filename, line) {
   if (filename && line) {
-    console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${typeof obj}】\x1b[0m`, _dateTime());
+    console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${Object.prototype.toString.call(obj)}】\x1b[0m`, _dateTime());
   } else {
     console.group();
   }
+
+  if (_isEmptyObject(obj)) {
+    console.log('空对象', obj);
+    _endLine();
+    console.groupEnd();
+    return;
+  }
+
   for (let key in obj) {
     let s  = '';
     let s1 = '';
@@ -130,12 +147,12 @@ function printProperties (obj, obj_name, filename, line) {
 
     if (typeof obj[key] === 'function') {
       if (obj_name) {s1 = `\x1b[90m${obj_name} = \x1b[0m`;}
-      s2 = `\x1b[43m ${key}\x1b[0m => \x1b[34m${obj[key]}\x1b[0m`;
+      s2 = `\x1b[43m ${key} \x1b[0m => \x1b[34m ${obj[key]} \x1b[0m`;
     } else if (typeof obj[key] === 'object') {
       printProperties(obj[key], key, filename, line);
     } else {
       if (obj_name) {s1 = `\x1b[90m${obj_name} = \x1b[0m`;}
-      s2 = `\x1b[43m ${key}\x1b[0m => \x1b[47m${obj[key]}\x1b[0m`;
+      s2 = `\x1b[43m ${key} \x1b[0m => \x1b[47m ${obj[key]} \x1b[0m`;
     }
     console.log(s + s1 + s2);
     _endLine();
@@ -151,3 +168,4 @@ exports.snlog           = snlog;
 exports.hlog            = hlog;
 exports.printJson       = printJson;
 exports.printProperties = printProperties;
+
