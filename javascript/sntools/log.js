@@ -114,14 +114,15 @@ function snlog (obj, obj_name, filename, line, level = 0) {
     return;
   }
 
-  if (_isEmptyObject(obj)) {
-    console.log('空对象', obj);
-    return;
-  }
-
   switch (typeof obj) {
     case 'object': {
-      printProperties(obj, obj_name, filename, line, 0);
+
+      if (_isEmptyObject(obj)) {
+        console.log('空对象', obj);
+        return;
+      }
+
+      printProperties(obj, obj_name, filename, line, level + 1);
       break;
     }
     case 'function': {
@@ -137,9 +138,10 @@ function snlog (obj, obj_name, filename, line, level = 0) {
       if (obj_name) {
         info = _objNameColor(obj_name);
       }
-      content = _objectColor(obj);
+      content = _funcColor(obj);
       console.log(info + content);
-      _endLine();
+      // _endLine();
+      console.log();
       console.groupEnd();
       break;
     }
@@ -183,13 +185,25 @@ function printJson (obj, obj_name, filename, line) {
 
 function printProperties (obj, obj_name, filename, line, level) {
 
-  if (level > 5) {
-    console.warn('printProperties level 大于 5 了');
+  if (level > 3) {
+    console.warn('printProperties level ' + level + ' 层了');
+    // console.log(obj_name + ' = ', obj, 'log.js', '188');
+    let info    = '';
+    let content = '';
+    if (obj_name) {info = _objNameColor(obj_name);}
+    // content = _keyColor(obj_name) + _arrowColor('=>');
+    console.log(info, obj);
+
     return;
   }
 
   if (filename && line) {
-    console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+    // console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+    if (level === 1) {
+      console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+    } else {
+      console.group(`\x1b[35m ${obj_name} : ${Object.prototype.toString.call(obj)} \x1b[0m`);
+    }
   } else {
     console.group();
   }
