@@ -24,6 +24,29 @@ function _isEmptyObject (obj) {
   return true;
 };
 
+function _keyColor (key) {
+  return `\x1b[43m ${key} \x1b[0m`;
+}
+
+function _arrowColor (arrow) {
+
+  return '\x1b[39m' + arrow + '\x1b[0m';
+}
+
+function _objectColor (obj) {
+  return `\x1b[106m ${obj} \x1b[0m`;
+}
+
+function _funcColor (func) {
+
+  return `\x1b[34m ${func} \x1b[0m`;
+}
+
+function _objNameColor (objName) {
+  return `\x1b[90m${objName} : \x1b[0m`;
+
+}
+
 function hPrintProperties (obj, obj_name, container, level) {
   for (let key in obj) {
 
@@ -80,55 +103,93 @@ function hlog (obj, obj_name, filename, line) {
   }
 }
 
-function snlog (obj, obj_name, filename, line) {
-  // console.log('\x1b[46m【 ' + filename + ':' + line + ' 】-: 👇\n\x1b[0m' + '\x1b[43m' + ` ${obj_name} = ` + '\x1b[0m' + obj);
+function snlog (obj, obj_name, filename, line, level = 0) {
+  if (level > 5) {
+    console.warn('snlog level 大于 5 了');
+    return;
+  }
 
   if (Object.prototype.toString.call(obj) === '[object Array Iterator]') {
-    snlog([...obj], `可迭代对象 [...${obj_name}]`, filename, line);
+    snlog([...obj], `可迭代对象 [...${obj_name}]`, filename, line, level + 1);
     return;
   }
 
-  if (typeof obj === 'object') {
-    printProperties(obj, obj_name, filename, line);
-
+  if (_isEmptyObject(obj)) {
+    console.log('空对象', obj);
     return;
   }
 
-  let s  = '';
-  let s1 = '';
-  let s2 = '';
-
-  if (typeof obj === 'function') {
-    if (filename && line) {
-      console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${typeof obj}】\x1b[0m`, _dateTime());
-    } else {
-      console.group();
+  switch (typeof obj) {
+    case 'object': {
+      printProperties(obj, obj_name, filename, line, 0);
+      break;
     }
+    case 'function': {
+      let info    = '';
+      let content = '';
 
-    if (obj_name) {s1 = `\x1b[90m${obj_name} = \x1b[0m`;}
-    s2 = `\x1b[34m${obj}\x1b[0m`;
-    console.log(s + s1 + s2);
-    console.log('\x1b[92m------------------------------------------------------\x1b[0m');
-    console.groupEnd();
-    return;
+      if (filename && line) {
+        console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${typeof obj}】\x1b[0m`, _dateTime());
+      } else {
+        console.group();
+      }
+
+      if (obj_name) {
+        info = _objNameColor(obj_name);
+      }
+      content = _objectColor(obj);
+      console.log(info + content);
+      _endLine();
+      console.groupEnd();
+      break;
+    }
+    default: {
+      let info    = '';
+      let content = '';
+      if (filename && line) {
+        console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${typeof obj}】\x1b[0m`, _dateTime());
+      } else {
+        console.group();
+      }
+
+      if (obj_name) {
+        info = _objNameColor(obj_name);
+      }
+
+      content = _objectColor(obj);
+      console.log(info + content);
+      _endLine();
+      console.groupEnd();
+    }
   }
 
-  if (filename && line) {s = `\x1b[46m【 ${filename}:${line} 】-: 👇\n\x1b[0m`;}
-  if (obj_name) {s1 = `\x1b[43m ${obj_name} = \x1b[0m`;}
-
-  s2 = `\x1b[47m ${obj} \n\x1b[0m`;
-
-  console.log(s + s1 + s2);
-  _endLine();
 }
 
 function printJson (obj, obj_name, filename, line) {
-  snlog(JSON.stringify(obj, null, 2), obj_name, filename, line);
+
+  let env; // true : browser false:node
+  try {
+    env = window;
+  } catch (err) {
+    env = false;
+  }
+
+  if (env) {
+    console.table(obj, obj_name, filename, line);
+  } else {
+    snlog(JSON.stringify(obj, null, 2), obj_name, filename, line);
+  }
 }
 
-function printProperties (obj, obj_name, filename, line) {
+function printProperties (obj, obj_name, filename, line, level) {
+
+  if (level > 5) {
+    console.warn('printProperties level 大于 5 了');
+    return;
+  }
+
   if (filename && line) {
-    console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${Object.prototype.toString.call(obj)}】\x1b[0m`, _dateTime());
+    console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
   } else {
     console.group();
   }
@@ -141,22 +202,54 @@ function printProperties (obj, obj_name, filename, line) {
   }
 
   for (let key in obj) {
-    let s  = '';
-    let s1 = '';
-    let s2 = '';
 
-    if (typeof obj[key] === 'function') {
-      if (obj_name) {s1 = `\x1b[90m${obj_name} = \x1b[0m`;}
-      s2 = `\x1b[43m ${key} \x1b[0m => \x1b[34m ${obj[key]} \x1b[0m`;
-    } else if (typeof obj[key] === 'object') {
-      printProperties(obj[key], key, filename, line);
-    } else {
-      if (obj_name) {s1 = `\x1b[90m${obj_name} = \x1b[0m`;}
-      s2 = `\x1b[43m ${key} \x1b[0m => \x1b[47m ${obj[key]} \x1b[0m`;
+    // if (!obj.propertyIsEnumerable(key)) {continue;}
+    if (!obj.hasOwnProperty(key)) {continue;}
+
+    let info    = '';
+    let content = '';
+
+    switch (typeof obj[key]) {
+
+      case 'function': {
+        if (obj_name) {info = _objNameColor(obj_name);}
+        content = _keyColor(key) + _arrowColor('=>') + _funcColor(obj[key]);
+        break;
+      }
+      case 'object': {
+
+        if (_isEmptyObject(obj)) {
+          console.log('空对象', obj);
+          _endLine();
+          continue;
+        }
+
+        // if (obj_name) {info = _objNameColor(obj_name);}
+        // content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
+        // console.log(info + content);
+        printProperties(obj[key], obj_name + ' 〉 ' + key, filename, line, level + 1);
+
+        break;
+      }
+      case 'symbol': {
+        if (obj_name) {info = _objNameColor(obj_name);}
+        content = _keyColor(key) + _arrowColor('=>');
+        console.log(info + content, obj[key]);
+        console.log();
+        // _endLine();
+        continue;
+        // break;
+      }
+
+      default: {
+        if (obj_name) {info = _objNameColor(obj_name);}
+        content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
+      }
     }
-    console.log(s + s1 + s2);
-    _endLine();
+
+    console.log(info + content + '\n');
   }
+  // _endLine();
   console.groupEnd();
 }
 
@@ -164,8 +257,9 @@ function printProperties (obj, obj_name, filename, line) {
 //   console.log(`${i} = \x1b[${i}m${'------------------------------------------------------'}\x1b[0m`);
 // }
 
-exports.snlog           = snlog;
-exports.hlog            = hlog;
-exports.printJson       = printJson;
-exports.printProperties = printProperties;
+// exports.snlog           = snlog;
+// exports.hlog            = hlog;
+// exports.printJson       = printJson;
+// exports.printProperties = printProperties;
 
+export {snlog, hlog, printProperties, printJson};
