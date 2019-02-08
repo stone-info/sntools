@@ -47,26 +47,55 @@ function _objNameColor (objName) {
 
 }
 
+function getInnerHTML (level, key, show) {
+  return `<pre style="padding-left: ${level * 20}px"><b style="color: red;background-color: yellow;font-weight: normal;">${key}</b> = ${show}</pre>`;
+}
+
+function getInnerHTMLWarn (level, key, show) {
+  return `<pre style="padding-left: ${level * 20}px"><b style="color: yellow;background-color: orangered;font-weight: normal;">${key}</b> = ${show}</pre>`;
+}
+
 function hPrintProperties (obj, obj_name, container, level) {
+
+  if (level > 3) {
+    // console.warn('printProperties level ' + level + ' 层了');
+    // console.log(obj_name + ' = ', obj, 'log.js', '188');
+    let show = obj;
+    container.innerHTML += getInnerHTMLWarn(level, obj_name, show);
+
+    return;
+  }
+
   for (let key in obj) {
+
+    if (!obj.hasOwnProperty(key)) {continue;}
 
     let objElement = obj[key];
 
     switch (typeof objElement) {
 
       case 'object':
-        container.innerHTML += `<pre style="padding-left: ${level * 20}px">${key} = ${_isEmptyObject(objElement) ? '{}' : objElement}</pre>`;
-        hPrintProperties(objElement, key, container, level + 1);
+        container.innerHTML += `<pre style="padding-left: ${level * 20}px">${obj_name + '〉' + key} = ${_isEmptyObject(objElement) ? '{}' : objElement}</pre>`;
+        hPrintProperties(objElement, obj_name + '〉' + key, container, level + 1);
         break;
       case 'function':
         // container.innerHTML += getLevelString(level) + `${key} = ${objElement}<br>`;
-        hPrintFunction(objElement, key, container, level);
+        hPrintFunction(objElement, obj_name + '〉' + key, container, level);
         break;
-      case 'boolean':
-        container.innerHTML += `<pre style="padding-left: ${level * 20}px"><b style="color: red;background-color: yellow;font-weight: normal;">${key}</b> = ${objElement ? 'true' : 'false'}</pre>`;
+      case 'boolean': {
+        let show = objElement ? 'true' : 'false';
+        container.innerHTML += getInnerHTML(level, obj_name + '〉' + key, show);
         break;
-      default:
-        container.innerHTML += `<pre style="padding-left: ${level * 20}px"><b style="color: red;background-color: yellow;font-weight: normal;">${key}</b> = ${objElement ? objElement : '"空字符串"'}</pre>`;
+      }
+      case 'symbol': {
+        // let show = objElement ? 'true' : 'false';
+        container.innerHTML += getInnerHTML(level, obj_name + '〉' + key, String(objElement));
+        break;
+      }
+      default: {
+        let show = objElement ? objElement : '"空字符串"';
+        container.innerHTML += getInnerHTML(level, key, show);
+      }
     }
   }
 }
@@ -76,24 +105,24 @@ function hPrintFunction (obj, obj_name, container, level) {
 <div style="position: absolute; left: 0; top: 0;width: ${level * 20}px; height: 100%;border-right: 1px dotted #000;"></div> <b style="color: darkcyan;background-color: yellow;font-weight: normal;">${obj_name}</b> = <b style="color: blue;font-weight: normal">${obj}</b></pre>`;
 }
 
-function hlog (obj, obj_name, filename, line) {
+function hlog (obj, obj_name, filename, line, level = 0) {
   let h3       = document.createElement('h4');
   h3.innerHTML = `【${filename}:${line}】-: 🔍 <b style="color: #008B8B;">${obj_name}</b> | type = 【${typeof obj}】` + _dateTime();
   document.body.appendChild(h3);
   // -----------------------------------------------------
   let container              = document.createElement('div');
   container.style.fontFamily = 'Consolas';
-  container.style.fontSize   = '12px';
+  container.style.fontSize   = '13px';
   document.body.appendChild(container);
   // -----------------------------------------------------
   switch (typeof obj) {
     case 'object':
       container.innerHTML += `${obj_name} = ${_isEmptyObject(obj) ? '{}' : obj}<br>`;
-      hPrintProperties(obj, obj_name, container, 1);
+      hPrintProperties(obj, obj_name, container, level + 1);
       break;
     case 'function':
       container.innerHTML += `${obj_name} = ${obj}<br>`;
-      hPrintFunction(obj, obj_name, container, 1);
+      hPrintFunction(obj, obj_name, container, level + 1);
       break;
     case 'boolean':
       container.innerHTML += `<pre>${obj_name} = ${obj ? 'true' : 'false'}</pre>`;
@@ -160,7 +189,6 @@ function snlog (obj, obj_name, filename, line, level = 0) {
 
       content = _objectColor(obj);
       console.log(info + content);
-      _endLine();
       console.groupEnd();
     }
   }
@@ -210,7 +238,6 @@ function printProperties (obj, obj_name, filename, line, level) {
 
   if (_isEmptyObject(obj)) {
     console.log('空对象', obj);
-    _endLine();
     console.groupEnd();
     return;
   }
@@ -234,7 +261,6 @@ function printProperties (obj, obj_name, filename, line, level) {
 
         if (_isEmptyObject(obj)) {
           console.log('空对象', obj);
-          _endLine();
           continue;
         }
 
@@ -261,7 +287,7 @@ function printProperties (obj, obj_name, filename, line, level) {
       }
     }
 
-    console.log(info + content + '\n');
+    console.log(info + content);
   }
   // _endLine();
   console.groupEnd();
