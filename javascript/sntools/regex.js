@@ -1,5 +1,7 @@
-const pattern = /world((\d)(\d)(\d))(\d{3})/img;
-var str       = 'hello world456789 WORLD123456';
+// const pattern = /world((\d)(\d)(\d))(\d{3})/img;
+// var str       = 'hello world456789 WORLD123456';
+
+// lastIndex 只作用于 方法 exec() 或 test()
 
 // 得自己写 /g 标记,
 function find (pattern, str, flags = 'img') {
@@ -79,10 +81,24 @@ function findAll (pattern, str, flags = 'img') {
 
 // 如果没有找到任何匹配的子串，则返回 -1。
 function findOne (pattern, str, flags = 'img') {
+  let _pattern = new RegExp(pattern, flags);
+  return str.search(_pattern);
+}
+
+console.log('■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■');
+let str     = 'hello world, stone, 123, WORLD';
+let pattern = /world/img;
+snlog(searchAll(pattern, str), `searchAll(pattern, str)`, 'regex.js', '91');
+
+console.log('■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■');
+
+function searchAll (pattern, str, flags = 'img') {
 
   let _pattern = new RegExp(pattern, flags);
-
-  return str.search(_pattern);
+  let rList    = [];
+  let m;
+  while ((m = _pattern.exec(str)) !== null) {rList.push(m.index);}
+  return rList;
 }
 
 function test (pattern, str, flags = 'img') {
@@ -90,7 +106,7 @@ function test (pattern, str, flags = 'img') {
   return _pattern.test(str);
 }
 
-export {findAll, test, findOne, find, replace, split};
+export {findAll, test, findOne, find, replace, split, searchAll};
 
 // var patt = new RegExp('RUNOOB', 'g');
 // var res  = patt.toString();
