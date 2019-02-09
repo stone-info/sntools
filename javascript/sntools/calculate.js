@@ -12,11 +12,43 @@
 // Element.currentStyle 是一个与 window.getComputedStyle方法功能相同的属性。这个属性实现在旧版本的IE浏览器中.
 // 非标准 该特性是非标准的，请尽量不要在生产环境中使用它！
 function getStyle (obj, name, pseudo = null) {
-  if (obj['currentStyle']) {
-    return obj['currentStyle'][name];
+
+  var val  = null;
+  var patt = null;
+
+  if ('getComputedStyle' in window) {
+    val = window.getComputedStyle(obj, pseudo)[name]; // 指定一个要匹配的伪元素的字符串。必须对普通元素省略（或null）。
   } else {
-    return getComputedStyle(obj, pseudo)[name];  // 指定一个要匹配的伪元素的字符串。必须对普通元素省略（或null）。
+    if (name === 'opacity') {
+      val = obj['currentStyle']['filter'];
+
+      patt = /^alpha\(opacity=(\d+(?:\.\d+)?)\)$/i;
+      val  = patt.test(val) ? patt.exec(val)[1] / 100 : 1;
+    } else {
+      val = obj['currentStyle'][name];
+    }
   }
+
+  patt = /^(-?\d+(\.\d+)?)(px|pt|rem|em)?$/i;
+
+  return patt.test(val) ? parseFloat(val) : val;
+
+  // if (obj['currentStyle']) {
+  //   return obj['currentStyle'][name];
+  // } else {
+  //   return getComputedStyle(obj, pseudo)[name];  // 指定一个要匹配的伪元素的字符串。必须对普通元素省略（或null）。
+  // }
+}
+
+function getUserAgent () {
+  return window.navigator.userAgent;
+}
+
+function getBrowserType () {
+
+  if (/MSIE (6|7|8)/.test(getUserAgent())) {return 'IE';}
+  if (/Chrome/.test(getUserAgent())) {return 'Chrome';}
+  return getUserAgent();
 }
 
 // 元素内容可编辑
@@ -113,7 +145,60 @@ function createGauges () {
   $body.append($sc);
 }
 
-export {getStyle, contentEditable, createGauges};
+// function getHTMLElement () {return document.documentElement;}
+//
+// function getAttributeValue (attr) {
+//   return document.documentElement[attr] || document.body[attr];
+// }
+//
+// function clientScreenWidth () {
+//   return document.documentElement.clientWidth || document.body.clientWidth;
+// }
+//
+// function setScrollToTop () {
+//   document.documentElement.scrollTop = 0;
+//   document.body.scrollTop            = 0;
+// }
+
+function win (attr, value) {
+  if (typeof value == 'undefined') {
+    return document.documentElement[attr] || document.body[attr];
+  }
+
+  document.documentElement[attr] = value;
+  document.body[attr]            = value;
+}
+
+// rect 是一个具有四个属性left、top、right、bottom的DOMRect对象
+//译者注：DOMRect 是 TextRectangle或 ClientRect 的别称，他们是相同的。
+// var rect = obj.getBoundingClientRect();
+
+function getBoundingClientRect (element) {
+  return element.getBoundingClientRect();
+}
+
+// element 到 body的边距
+// offsetLeft 不给力, CSS transform的时候 计算不正确,
+// 推荐使用 getBoundingClientRect
+function intervalWithBody (element, val, level = 0) {
+
+  val.left += element.clientLeft;
+  val.left += element.offsetLeft;
+
+  val.top += element.clientTop;
+  val.top += element.offsetTop;
+
+  // if (element.offsetParent && element.offsetParent.tagName.toLowerCase() !== 'body') {
+  if (element.offsetParent) {
+    intervalWithBody(element.offsetParent, val, level + 1);
+  }
+  if (level === 0) {
+    val.left = val.left - element.clientLeft;
+    val.top  = val.top - element.clientTop;
+  }
+}
+
+export {getStyle, contentEditable, createGauges, win, getUserAgent, intervalWithBody};
 
 export default (box) => {
 
@@ -130,6 +215,10 @@ export default (box) => {
 
   // snlog(box.scrollWidth, `box.scrollWidth`, 'calculate.js', '81');
   // snlog(box.scrollHeight, `box.scrollHeight`, 'calculate.js', '82');
+
+  snlog(getUserAgent(), `getUserAgent()`, 'calculate.js', '173');
+
+  snlog(getBrowserType(), `getBrowserType()`, 'calculate.js', '186');
 
 }
 
