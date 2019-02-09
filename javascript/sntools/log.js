@@ -1,3 +1,5 @@
+import {isEmpty} from './type';
+
 const dateformat = require('dateformat');
 
 // let chalk = require('chalk');
@@ -132,6 +134,10 @@ function hlog (obj, obj_name, filename, line, level = 0) {
   }
 }
 
+// for (let i = 100; i < 300; i++) {
+//   console.log(`${i} = \x1b[${i}m${'hello world'}\x1b[0m`);
+// }
+
 function snlog (obj, obj_name, filename, line, level = 0) {
   if (level > 5) {
     console.warn('snlog level 大于 5 了');
@@ -143,23 +149,35 @@ function snlog (obj, obj_name, filename, line, level = 0) {
     return;
   }
 
-  switch (typeof obj) {
-    case 'object': {
+  let t = Object.prototype.toString.call(obj);
 
-      if (_isEmptyObject(obj)) {
-        console.log('空对象', obj);
-        return;
-      }
+  switch (t) {
+    case '[object Object]': {
+
+      let empty = isEmpty(obj);
+
+      if (empty.empty) {return console.log('空对象', obj);}
 
       printProperties(obj, obj_name, filename, line, level + 1);
       break;
     }
-    case 'function': {
+
+    case '[object Array]': {
+
+      let empty = isEmpty(obj);
+
+      if (empty.empty) {return console.log('空数组', obj);}
+
+      printProperties(obj, obj_name, filename, line, level + 1);
+      break;
+    }
+
+    case '[object Function]': {
       let info    = '';
       let content = '';
 
       if (filename && line) {
-        console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${typeof obj}】\x1b[0m`, _dateTime());
+        console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
       } else {
         console.group();
       }
@@ -174,20 +192,31 @@ function snlog (obj, obj_name, filename, line, level = 0) {
       console.groupEnd();
       break;
     }
+
+    case '[object String]' : {
+
+      let info    = '';
+      let content = '';
+      if (filename && line) {console.log(`\x1b[102m ${filename}:${line} `);}
+      if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
+
+      let emp = isEmpty(obj);
+      content = emp.empty ? `\x1b[104m "${emp.suggest}" \x1b[0m` : `\x1b[104m ${obj} \x1b[0m`;
+
+      console.log(info + content);
+      console.groupEnd();
+
+      break;
+    }
+
     default: {
       let info    = '';
       let content = '';
-      if (filename && line) {
-        console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | type = 【${typeof obj}】\x1b[0m`, _dateTime());
-      } else {
-        console.group();
-      }
+      if (filename && line) {console.log(`\x1b[102m ${filename}:${line} `);}
 
-      if (obj_name) {
-        info = _objNameColor(obj_name);
-      }
+      if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
 
-      content = _objectColor(obj);
+      content = `\x1b[104m ${obj} \x1b[0m`;
       console.log(info + content);
       console.groupEnd();
     }
@@ -236,11 +265,8 @@ function printProperties (obj, obj_name, filename, line, level) {
     console.group();
   }
 
-  if (_isEmptyObject(obj)) {
-    console.log('空对象', obj);
-    console.groupEnd();
-    return;
-  }
+  let empty = isEmpty(obj);
+  if (empty.empty) {return console.log('空对象', obj);}
 
   for (let key in obj) {
 
@@ -250,19 +276,17 @@ function printProperties (obj, obj_name, filename, line, level) {
     let info    = '';
     let content = '';
 
-    switch (typeof obj[key]) {
+    switch (Object.prototype.toString.call(obj[key])) {
 
-      case 'function': {
+      case '[object Function]': {
         if (obj_name) {info = _objNameColor(obj_name);}
         content = _keyColor(key) + _arrowColor('=>') + _funcColor(obj[key]);
         break;
       }
-      case 'object': {
+      case '[object Object]': {
 
-        if (_isEmptyObject(obj)) {
-          console.log('空对象', obj);
-          continue;
-        }
+        let empty = isEmpty(obj);
+        if (empty.empty) {return console.log('空对象', obj);}
 
         // if (obj_name) {info = _objNameColor(obj_name);}
         // content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
@@ -271,7 +295,21 @@ function printProperties (obj, obj_name, filename, line, level) {
 
         break;
       }
-      case 'symbol': {
+      case '[object Array]': {
+
+        let empty = isEmpty(obj);
+
+        if (empty.empty) {return console.log('空数组', obj);}
+
+        // if (obj_name) {info = _objNameColor(obj_name);}
+        // content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
+        // console.log(info + content);
+        printProperties(obj[key], obj_name + ' 〉 ' + key, filename, line, level + 1);
+
+        break;
+      }
+
+      case '[object Symbol]': {
         if (obj_name) {info = _objNameColor(obj_name);}
         content = _keyColor(key) + _arrowColor('=>');
         console.log(info + content, obj[key]);
