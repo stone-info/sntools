@@ -1,5 +1,66 @@
+var flag             = 'getComputedStyle' in window;
+var passiveSupported = false;
+try {
+  var options = Object.defineProperty({}, 'passive', {
+    get: function () {return (passiveSupported = true);},
+  });
+  window.addEventListener('test', null, options);
+} catch (err) {}
+
+function _handleEvent (event) {
+  if (event) {event = event || window.event;}
+  if (!event.target) {event.target = event.srcElement;}
+  if (!event.pageX) {event.pageX = event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft);}
+  if (!event.pageY) {event.pageY = event.clientY + (document.documentElement.scrollTop || document.body.scrollTop);}
+  if (!event.preventDefault) {event.preventDefault = function () {event.returnValue = false;};}
+  if (!event.stopPropagation) {event.stopPropagation = function () {event.cancelBubble = true;};}
+  return event;
+}
+
+// dom2级 兼容性处理
+function _bind (eventName, curElement, runCallback, useCapture = false) {
+
+  let tempFn = function (event) {
+    _handleEvent(event);
+    runCallback.call(curElement, event);
+  };
+
+  tempFn.sn_snapshot = runCallback;
+
+  if (!curElement['bindList' + eventName]) {curElement['bindList' + eventName] = [];}
+
+  let bindList = curElement['bindList' + eventName];
+
+  for (let i = 0; i < bindList.length; ++i) {
+    let bindItem = bindList[i];
+    if (bindItem.sn_snapshot === runCallback) {return;}
+  }
+
+  bindList.push(tempFn);
+
+  if ('addEventListener' in document) {
+    curElement.addEventListener(eventName, tempFn, passiveSupported ? useCapture : false);
+  } else {
+    // IE 只能在冒泡阶段
+    curElement.attachEvent('on' + eventName, tempFn);
+  }
+}
+
+function _unbind (eventName, curElement, callback, useCapture = false) {
+  for (let i = 0; i < curElement['bindList' + eventName].length; ++i) {
+    let tempFn = curElement['bindList' + eventName][i];
+    if (tempFn.sn_snapshot === callback) {
+      if ('removeEventListener' in document) {
+        curElement.removeEventListener(eventName, tempFn, passiveSupported ? useCapture : false);
+      } else {
+        // IE 只能在冒泡阶段
+        curElement.detachEvent('on' + eventName, tempFn);
+      }
+    }
+  }
+}
+
 export default (function () {
-  var flag = 'getComputedStyle' in window;
 
   function listToArray (likeArray) {
     if (flag) {
@@ -61,6 +122,10 @@ export default (function () {
     }
     patt = /^(-?\d+(\.\d+)?)(px|pt|rem|em)?$/i;
     return patt.test(val) ? parseFloat(val) : val;
+  }
+
+  function parent (curElement) {
+    return curElement.parentNode;
   }
 
   function children (curElement, tagName) {
@@ -350,6 +415,133 @@ export default (function () {
     }
   }
 
+  function randomColor (apacity = 1.0) {
+    var r = Math.floor(Math.random() * 256);
+    var g = Math.floor(Math.random() * 256);
+    var b = Math.floor(Math.random() * 256);
+    var a = apacity;
+    return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+  }
+
+  // clientX, clientY , 客户端能看得见的 原点开始 , 不考虑滚动
+  // event.type
+  // event.target
+  // event.pageX
+  // event.keyCode
+  // dom0级 都是冒泡
+  // function on (eventName, curElement, callback, preventDefault = false, stopPropagation = false) {
+  //   curElement['on' + eventName] = function (event) {
+  //     event         = event || window.event;
+  //     event._target = event.target || event.srcElement;
+  //     event._pageX  = event.pageX || (event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft));
+  //     event._pageY  = event.pageY || (event.clientY + (document.documentElement.scrollTop || document.body.scrollTop));
+  //
+  //     if (preventDefault) {
+  //       event.preventDefault ? event.preventDefault() : event.returnValue = false;
+  //     }
+  //     if (stopPropagation) {
+  //       // w3c的方法是e.stopPropagation()，IE则是使用e.cancelBubble = true
+  //       event.stopPropagation ? event.stopPropagation() : event.cancelBubble = true;
+  //     }
+  //     callback(event);
+  //   };
+  // }
+
+  // useCapture 默认为 false
+  // useCapture  可选
+  // Boolean，是指在DOM树中，注册了该listener的元素，是否会先于它下方的任何事件目标，接收到该事件。
+  // 沿着DOM树向上冒泡的事件不会触发被指定为use capture（也就是设为true）的listener。
+  // 当一个元素嵌套了另一个元素，两个元素都对同一个事件注册了一个处理函数时，
+  // 所发生的事件冒泡和事件捕获是两种不同的事件传播方式。
+  // 事件传播模式决定了元素以哪个顺序接收事件。
+  // 进一步的解释可以查看 事件流 及 JavaScript Event order 文档。
+  // 如果没有指定， useCapture 默认为 false 。
+
+  // preventDefault true: 阻止默认事件
+  // useCapture true: 捕获 false: 冒泡
+  function addEventListener (eventName, curElement, runCallback, useCapture = false) {
+
+    let tempFn = function (event) {
+      _handleEvent(event);
+      runCallback.call(curElement, event);
+    };
+
+    tempFn.sn_snapshot = runCallback;
+
+    if (!curElement['bindList' + eventName]) {curElement['bindList' + eventName] = [];}
+
+    let bindList = curElement['bindList' + eventName];
+
+    for (let i = 0; i < bindList.length; ++i) {
+      let bindItem = bindList[i];
+      if (bindItem.sn_snapshot === runCallback) {return;}
+    }
+
+    bindList.push(tempFn);
+
+    if ('addEventListener' in document) {
+      curElement.addEventListener(eventName, tempFn, passiveSupported ? useCapture : false);
+    } else {
+      // IE 只能在冒泡阶段
+      curElement.attachEvent('on' + eventName, tempFn);
+    }
+  }
+
+  function removeEventListener (eventName, curElement, callback, useCapture = false) {
+
+    for (let i = 0; i < curElement['bindList' + eventName].length; ++i) {
+      let tempFn = curElement['bindList' + eventName][i];
+      if (tempFn.sn_snapshot === callback) {
+        if ('removeEventListener' in document) {
+          curElement.removeEventListener(eventName, tempFn, passiveSupported ? useCapture : false);
+        } else {
+          // IE 只能在冒泡阶段
+          curElement.detachEvent('on' + eventName, tempFn);
+        }
+      }
+    }
+  }
+
+  function on (eventName, curElement, callback, useCapture = false) {
+    if (!curElement['callbackList' + eventName]) {curElement['callbackList' + eventName] = [];}
+    let callbackList = curElement['callbackList' + eventName];
+    for (let i = 0; i < callbackList.length; ++i) {
+      let callbackItem = callbackList[i];
+      if (callbackItem === callback) {return;}
+    }
+    callbackList.push(callback);
+
+    _bind(eventName, curElement, run, useCapture);
+  }
+
+  function off (eventName, curElement, callback, useCapture = false) {
+
+    let callbackList = curElement['callbackList' + eventName];
+
+    for (let i = 0; i < callbackList.length; ++i) {
+
+      let callbackItem = callbackList[i];
+
+      if (callbackItem === callback) {
+        callbackList.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  function run (event) {
+    event = _handleEvent(event);
+
+    let callbackList = event.target['callbackList' + event.type];
+
+    for (let i = 0; i < callbackList.length; ++i) {
+
+      let callbackItem = callbackList[i];
+
+      callbackItem.call(event.target, event);
+    }
+  }
+
   return {
     listToArray           : listToArray,
     formatJSON            : formatJSON,
@@ -359,6 +551,7 @@ export default (function () {
     setCss                : setCss,
     setGroupCss           : setGroupCss,
     children              : children,
+    parent                : parent,
     prev                  : prev,
     prevAll               : prevAll,
     next                  : next,
@@ -378,6 +571,11 @@ export default (function () {
     hasClass              : hasClass,
     getElementsByClassName: getElementsByClassName,
     css                   : css,
+    randomColor           : randomColor,
+    on                    : on,
+    off                   : off,
+    addEventListener      : addEventListener,
+    removeEventListener   : removeEventListener,
   };
 })();
 

@@ -136,12 +136,12 @@ function scrollTop (element) {
 }
 
 function createGauges () {
-  let $s    = $(`<style> table { position : fixed; left : 50%; top : 10px; transform : translate(-50%, 0);background-color : #008b8b; } table th { color : #FFF; padding : 10px; width : 100px; } table td { color : #FFF; padding : 10px; } </style>`);
+  let $s    = $(`<style> .gauges {position         : fixed;left             : 50%;top              : 10px;transform        : translate(-50%, 0);background-color : #008b8b;}  .gauges th {color   : #FFF;padding : 10px;width   : 100px;}  .gauges td {color   : #FFF;padding : 10px;}</style>`);
   let $body = $('body');
   $body.append($s);
-  let $t = $(`<table class="gauges" border="1" style={{ borderCollapse: 'collapse' }}><thead><tr><th></th><th>x</th><th>y</th></tr></thead><tbody align="center"><tr><td>client</td><td>0</td><td>0</td></tr><tr><td>page</td><td>0</td><td>0</td></tr><tr><td>screen</td><td>0</td><td>0</td></tr><tr><td>offset</td><td>0</td><td>0</td></tr></tbody></table>`);
+  let $t = $(`<table class="gauges" border="1" style="border-collapse:collapse"><thead><tr><th></th><th>x</th><th>y</th></tr></thead><tbody align="center"><tr><td>client</td><td>0</td><td>0</td></tr><tr><td>page</td><td>0</td><td>0</td></tr><tr><td>screen</td><td>0</td><td>0</td></tr><tr><td>offset</td><td>0</td><td>0</td></tr></tbody></table>`);
   $body.append($t);
-  let $sc = `<script type="text/javascript"> $('body').click(function (event) {let obj = { clientX: event.clientX, clientY: event.clientY, pageX  : event.pageX, pageY  : event.pageY, screenX: event.screenX, screenY: event.screenY, offsetX: event.offsetX, offsetY: event.offsetY, };{let $tr = $('tr:nth-of-type(1)');$tr.find('td').eq(1).text(obj.clientX);$tr.find('td').eq(2).text(obj.clientY);}{let $tr = $('tr:nth-of-type(2)');$tr.find('td').eq(1).text(obj.pageX);$tr.find('td').eq(2).text(obj.pageY);}{let $tr = $('tr:nth-of-type(3)');$tr.find('td').eq(1).text(obj.screenX);$tr.find('td').eq(2).text(obj.screenY);}{let $tr = $('tr:nth-of-type(4)');$tr.find('td').eq(1).text(obj.offsetX);$tr.find('td').eq(2).text(obj.offsetY);}});</script>`;
+  let $sc = `<script type="text/javascript"> $('body').click(function (event) {let obj    = { clientX: event.clientX, clientY: event.clientY, pageX  : event.pageX, pageY  : event.pageY, screenX: event.screenX, screenY: event.screenY, offsetX: event.offsetX, offsetY: event.offsetY, };let $table = $('.gauges');{let $tr = $table.find('tr:nth-of-type(1)');$tr.find('td').eq(1).text(obj.clientX);$tr.find('td').eq(2).text(obj.clientY);}{let $tr = $table.find('tr:nth-of-type(2)');$tr.find('td').eq(1).text(obj.pageX);$tr.find('td').eq(2).text(obj.pageY);}{let $tr = $table.find('tr:nth-of-type(3)');$tr.find('td').eq(1).text(obj.screenX);$tr.find('td').eq(2).text(obj.screenY);}{let $tr = $table.find('tr:nth-of-type(4)');$tr.find('td').eq(1).text(obj.offsetX);$tr.find('td').eq(2).text(obj.offsetY);}});</script>`;
   $body.append($sc);
 }
 

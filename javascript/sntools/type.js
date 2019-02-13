@@ -21,20 +21,34 @@ function isEmpty (obj) {
   switch (Object.prototype.toString.call(obj)) {
     case '[object Object]': {
       let flag = true;
-      for (let key in obj) {flag = false;}
-      return { empty: flag, suggest: '{}' };
+      for (let key in obj) {
+        flag = false;
+        break;
+      }
+      return { empty: flag, suggest: '{}', message: '空对象' };
     }
     case '[object Array]': {
       let flag = true;
-      for (let key in obj) {flag = false;}
-      return { empty: flag, suggest: '[]' };
+      for (let key in obj) {
+        flag = false;
+        break;
+      }
+      return { empty: flag, suggest: '[]', message: '空数组' };
     }
-    case '[object String]': {
+    case '[object Arguments]': {
+      let flag = true;
+      for (let key in obj) {
+        flag = false;
+        break;
+      }
+      return { empty: flag, suggest: '[]', message: '空arguments' };
+    }
 
-      return { empty: !obj, suggest: '空字符串' };
+    case '[object String]': {
+      return { empty: !obj, suggest: '空字符串', message: '空字符串' };
     }
     default:
-      return true;
+      return { empty: !obj, suggest: Object.prototype.toString.call(obj), message: '空对象other' };
   }
 }
 

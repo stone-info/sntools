@@ -1,5 +1,4 @@
-import {isEmpty}           from './type';
-import {sprintf, vsprintf} from 'sprintf-js';
+import {isEmpty} from './type';
 
 const dateformat = require('dateformat');
 
@@ -17,9 +16,7 @@ function _endLine () {
 }
 
 function _dateTime () {
-  // return '@' + dateformat(new Date(), 'yyyy-MM-dd HH:mm:ss');
-  let date = new Date();
-  return '@' + dateformat(date, 'HH:mm:ss') + ':' + sprintf('%03d', date.getMilliseconds());
+  return '@' + dateformat(new Date(), 'yyyy-MM-dd HH:mm:ss');
 }
 
 function _isEmptyObject (obj) {
@@ -141,61 +138,53 @@ function hlog (obj, obj_name, filename, line, level = 0) {
 //   console.log(`${i} = \x1b[${i}m${'hello world'}\x1b[0m`);
 // }
 
-function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
-  let group = collapsed ? console.groupCollapsed : console.group;
-
+function snlog (obj, obj_name, filename, line, level = 0) {
   if (level > 5) {
-    // console.warn('snlog level 大于 5 了');
-    // let info    = '';
-    // let content = '';
-    // if (filename && line) {console.log(`\x1b[102m ${filename}:${line} `);}
-    // if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
-    // console.log(info);
-    // console.log(obj);
-
-    let info    = '';
-    let content = '';
-    if (obj_name) {info = _objNameColor(obj_name);}
-    content = _keyColor(obj_name) + _arrowColor('=>') + _objectColor(obj);
-    console.group(info + content);
-    console.log(obj);
-    console.groupEnd();
-
+    console.warn('snlog level 大于 5 了');
     return;
   }
 
   if (Object.prototype.toString.call(obj) === '[object Array Iterator]') {
-    snlog([...obj], `可迭代对象 [...${obj_name}]`, filename, line, collapsed, level + 1);
+    snlog([...obj], `可迭代对象 [...${obj_name}]`, filename, line, level + 1);
     return;
   }
 
-  // let t = Object.prototype.toString.call(obj);
-  let t = typeof obj;
+  let t = Object.prototype.toString.call(obj);
 
   switch (t) {
-    case 'object': {
+    case '[object Object]': {
 
       let empty = isEmpty(obj);
 
-      if (empty.empty) {return console.log(empty.message, obj);}
+      if (empty.empty) {return console.log('空对象', obj);}
 
-      printProperties(obj, obj_name, filename, line, level + 1, obj_name, collapsed);
-
+      printProperties(obj, obj_name, filename, line, level + 1);
       break;
     }
 
-    case 'function': {
+    case '[object Array]': {
+
+      let empty = isEmpty(obj);
+
+      if (empty.empty) {return console.log('空数组', obj);}
+
+      printProperties(obj, obj_name, filename, line, level + 1);
+      break;
+    }
+
+    case '[object Function]': {
       let info    = '';
       let content = '';
 
       if (filename && line) {
-        group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+        console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
       } else {
-        group();
+        console.group();
       }
 
-      if (obj_name) {info = _objNameColor(obj_name);}
-
+      if (obj_name) {
+        info = _objNameColor(obj_name);
+      }
       content = _funcColor(obj);
       console.log(info + content);
       // _endLine();
@@ -204,7 +193,7 @@ function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
       break;
     }
 
-    case 'string' : {
+    case '[object String]' : {
 
       let info    = '';
       let content = '';
@@ -212,9 +201,21 @@ function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
       if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
 
       let emp = isEmpty(obj);
-      content = emp.empty ? `\x1b[104m "${emp.message}" \x1b[0m` : `\x1b[104m ${obj} \x1b[0m`;
+      content = emp.empty ? `\x1b[104m "${emp.suggest}" \x1b[0m` : `\x1b[104m ${obj} \x1b[0m`;
 
       console.log(info + content);
+      console.groupEnd();
+
+      break;
+    }
+
+    case '[object Arguments]' : {
+
+      let empty = isEmpty(obj);
+
+      if (empty.empty) {return console.log('空对象', obj);}
+
+      printProperties(obj, obj_name, filename, line, level + 1);
 
       break;
     }
@@ -227,8 +228,8 @@ function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
       if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
 
       content = `\x1b[104m ${obj} \x1b[0m`;
-
       console.log(info + content);
+      console.groupEnd();
     }
   }
 
@@ -250,48 +251,38 @@ function printJson (obj, obj_name, filename, line) {
   }
 }
 
-function printProperties (obj, obj_name, filename, line, level, key_name, collapsed) {
-
-  let group = collapsed ? console.groupCollapsed : console.group;
+function printProperties (obj, obj_name, filename, line, level) {
 
   if (level > 3) {
-    // console.warn('printProperties level ' + level + ' 层了');
-    // let info    = '';
-    // let content = '';
-    // if (key_name) {info = _objNameColor(key_name);}
-    // console.log(info);
-    // console.log(obj);
-
+    console.warn('printProperties level ' + level + ' 层了');
+    // console.log(obj_name + ' = ', obj, 'log.js', '188');
     let info    = '';
     let content = '';
-    if (key_name) {info = _objNameColor(key_name);}
-    content = _keyColor(key_name) + _arrowColor('=>') + _objectColor(obj) + '| level(' + level + ')';
-    console.group(info + content);
-    console.log(obj);
-    console.groupEnd();
+    if (obj_name) {info = _objNameColor(obj_name);}
+    // content = _keyColor(obj_name) + _arrowColor('=>');
+    console.log(info, obj);
 
     return;
   }
 
   if (filename && line) {
-    // group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+    // console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
     if (level === 1) {
-
-      group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+      console.group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
     } else {
-      group(`\x1b[35m ${obj_name} : ${Object.prototype.toString.call(obj)} \x1b[0m`);
+      console.group(`\x1b[35m ${obj_name} : ${Object.prototype.toString.call(obj)} \x1b[0m`);
     }
   } else {
-    group();
+    console.group();
   }
 
   let empty = isEmpty(obj);
-  if (empty.empty) {return console.log(empty.message, obj);}
+  if (empty.empty) {return console.log('空对象', obj);}
 
   for (let key in obj) {
 
     // if (!obj.propertyIsEnumerable(key)) {continue;}
-    // if (!obj.hasOwnProperty(key)) {continue;}
+    if (!obj.hasOwnProperty(key)) {continue;}
 
     let info    = '';
     let content = '';
@@ -299,16 +290,19 @@ function printProperties (obj, obj_name, filename, line, level, key_name, collap
     switch (Object.prototype.toString.call(obj[key])) {
 
       case '[object Function]': {
-        if (key_name) {info = _objNameColor(key_name);}
+        if (obj_name) {info = _objNameColor(obj_name);}
         content = _keyColor(key) + _arrowColor('=>') + _funcColor(obj[key]);
         break;
       }
       case '[object Object]': {
 
         let empty = isEmpty(obj);
-        if (empty.empty) {return console.log(empty.message, obj);}
+        if (empty.empty) {return console.log('空对象', obj);}
 
-        printProperties(obj[key], obj_name + ' 〉 ' + key, filename, line, level + 1, key);
+        // if (obj_name) {info = _objNameColor(obj_name);}
+        // content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
+        // console.log(info + content);
+        printProperties(obj[key], obj_name + ' 〉 ' + key, filename, line, level + 1);
 
         break;
       }
@@ -316,63 +310,18 @@ function printProperties (obj, obj_name, filename, line, level, key_name, collap
 
         let empty = isEmpty(obj);
 
-        if (empty.empty) {return console.log(empty.message, obj);}
+        if (empty.empty) {return console.log('空数组', obj);}
 
-        printProperties(obj[key], obj_name + ' 〉 ' + key, filename, line, level + 1, key);
-
-        break;
-      }
-
-      // case '[object MouseEvent]': {
-      //
-      //   if (obj_name + ' 〉 ' + key) {info = _objNameColor(obj_name + ' 〉 ' + key);}
-      //   console.log(info + '' + Object.prototype.toString.call(obj[key]));
-      //   console.log(obj[key]);
-      //
-      //   continue;
-      // }
-
-      case '[object MouseEvent]': {
-
-        let empty = isEmpty(obj[key]);
-        if (empty.empty) {return console.log(empty.message, obj[key]);}
-
-        printProperties(obj[key], obj_name + ' 〉 ' + key, filename, line, level + 1, key);
-
-        break;
-      }
-
-      case '[object NodeList]':
-      case '[object DOMStringMap]':
-      case '[object CSSStyleDeclaration]':
-      case '[object Text]':
-      case '[object StylePropertyMap]':
-      case '[object NamedNodeMap]':
-      case '[object Window]':
-      case '[object HTMLCollection]':
-      case '[object HTMLParagraphElement]':
-      case '[object HTMLUListElement]':
-      case '[object HTMLLIElement]':
-      case '[object HTMLDocument]':
-      case '[object HTMLDivElement]':
-      case '[object HTMLHtmlElement]':
-      case '[object HTMLBodyElement]': {
-
-        // if (key_name) {info = _objNameColor(key_name);}
+        // if (obj_name) {info = _objNameColor(obj_name);}
         // content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
-        // group(info + content);
-        // console.log(obj[key]);
-        // console.groupEnd();
-        if (key_name) {info = _objNameColor(key_name);}
-        content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
-        console.group(info + content);
-        console.log(obj[key]);
-        console.groupEnd();
-        continue;
+        // console.log(info + content);
+        printProperties(obj[key], obj_name + ' 〉 ' + key, filename, line, level + 1);
+
+        break;
       }
 
       case '[object Symbol]': {
-        if (key_name) {info = _objNameColor(key_name);}
+        if (obj_name) {info = _objNameColor(obj_name);}
         content = _keyColor(key) + _arrowColor('=>');
         console.log(info + content, obj[key]);
         console.log();
@@ -382,7 +331,7 @@ function printProperties (obj, obj_name, filename, line, level, key_name, collap
       }
 
       default: {
-        if (key_name) {info = _objNameColor(key_name);}
+        if (obj_name) {info = _objNameColor(obj_name);}
         content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
       }
     }
