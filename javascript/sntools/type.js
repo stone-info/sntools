@@ -52,14 +52,25 @@ function isEmpty (obj) {
   }
 }
 
-export {
-  isArray,
-  isObject,
-  isString,
-  isNumber,
-  isUndefined,
-  isNull,
-  isSymbol,
-  isFunction,
-  isEmpty,
-};
+exports.isArray     = isArray;
+exports.isObject    = isObject;
+exports.isString    = isString;
+exports.isNumber    = isNumber;
+exports.isUndefined = isUndefined;
+exports.isNull      = isNull;
+exports.isSymbol    = isSymbol;
+exports.isFunction  = isFunction;
+exports.isEmpty     = isEmpty;
+
+// export {
+//   isArray,
+//   isObject,
+//   isString,
+//   isNumber,
+//   isUndefined,
+//   isNull,
+//   isSymbol,
+//   isFunction,
+//   isEmpty,
+// };
+

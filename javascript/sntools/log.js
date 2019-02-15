@@ -1,5 +1,11 @@
-import {isEmpty}           from './type';
-import {sprintf, vsprintf} from 'sprintf-js';
+// import {isEmpty}           from './type';
+// import {sprintf, vsprintf} from 'sprintf-js';
+
+// const isEmpty = require('./type').isEmpty;
+const { isEmpty } = require('./type');
+const info        = require('./sninfo');
+const sprintf     = require('sprintf-js').sprintf;
+const vsprintf    = require('sprintf-js').vsprintf;
 
 const dateformat = require('dateformat');
 
@@ -12,55 +18,57 @@ const dateformat = require('dateformat');
 //   console.log(chalk.bold('------------------------------------------------------'));
 // }
 
-function _endLine () {
-  console.log('\x1b[92m------------------------------------------------------\x1b[0m');
+function _endLine() {
+  // console.log('\x1b[92m------------------------------------------------------\x1b[0m');
+
+  console.log('\x1b[1m' + '-'.repeat(90) + '\x1b[0m');
 }
 
-function _dateTime () {
+function _dateTime() {
   // return '@' + dateformat(new Date(), 'yyyy-MM-dd HH:mm:ss');
   let date = new Date();
   return '@' + dateformat(date, 'HH:mm:ss') + ':' + sprintf('%03d', date.getMilliseconds());
 }
 
-function _isEmptyObject (obj) {
+function _isEmptyObject(obj) {
   for (var key in obj) {
     return false;
   }
   return true;
 };
 
-function _keyColor (key) {
+function _keyColor(key) {
   return `\x1b[43m ${key} \x1b[0m`;
 }
 
-function _arrowColor (arrow) {
+function _arrowColor(arrow) {
 
   return '\x1b[39m' + arrow + '\x1b[0m';
 }
 
-function _objectColor (obj) {
+function _objectColor(obj) {
   return `\x1b[106m ${obj} \x1b[0m`;
 }
 
-function _funcColor (func) {
+function _funcColor(func) {
 
   return `\x1b[34m ${func} \x1b[0m`;
 }
 
-function _objNameColor (objName) {
+function _objNameColor(objName) {
   return `\x1b[90m${objName} : \x1b[0m`;
 
 }
 
-function getInnerHTML (level, key, show) {
+function getInnerHTML(level, key, show) {
   return `<pre style="padding-left: ${level * 20}px"><b style="color: red;background-color: yellow;font-weight: normal;">${key}</b> = ${show}</pre>`;
 }
 
-function getInnerHTMLWarn (level, key, show) {
+function getInnerHTMLWarn(level, key, show) {
   return `<pre style="padding-left: ${level * 20}px"><b style="color: yellow;background-color: orangered;font-weight: normal;">${key}</b> = ${show}</pre>`;
 }
 
-function hPrintProperties (obj, obj_name, container, level) {
+function hPrintProperties(obj, obj_name, container, level) {
 
   if (level > 3) {
     // console.warn('printProperties level ' + level + ' 层了');
@@ -105,12 +113,12 @@ function hPrintProperties (obj, obj_name, container, level) {
   }
 }
 
-function hPrintFunction (obj, obj_name, container, level) {
+function hPrintFunction(obj, obj_name, container, level) {
   container.innerHTML += `<pre style="position: relative; left: 0; top: 0;padding-left: ${level * 20}px;margin-bottom: 10px;">
 <div style="position: absolute; left: 0; top: 0;width: ${level * 20}px; height: 100%;border-right: 1px dotted #000;"></div> <b style="color: darkcyan;background-color: yellow;font-weight: normal;">${obj_name}</b> = <b style="color: blue;font-weight: normal">${obj}</b></pre>`;
 }
 
-function hlog (obj, obj_name, filename, line, level = 0) {
+function hlog(obj, obj_name, filename, line, level = 0) {
   let h3       = document.createElement('h4');
   h3.innerHTML = `【${filename}:${line}】-: 🔍 <b style="color: #008B8B;">${obj_name}</b> | type = 【${typeof obj}】` + _dateTime();
   document.body.appendChild(h3);
@@ -141,7 +149,34 @@ function hlog (obj, obj_name, filename, line, level = 0) {
 //   console.log(`${i} = \x1b[${i}m${'hello world'}\x1b[0m`);
 // }
 
-function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
+function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
+
+  if ('[object Error]' === Object.prototype.toString.call(obj_name)) {
+    let obj_name_info = obj_name.stack.split('\n')[0];
+
+    if ('Error' === obj_name_info) {obj_name_info = ' ';}
+
+    let fileInfo                = obj_name.stack.split('\n')[1];
+    let message                 = fileInfo.substring(fileInfo.lastIndexOf('/') + 1);
+    let regExpMatchArray        = message.match(/.*?:\d+/img);
+    let regExpMatchArrayElement = regExpMatchArray[0].split(':');
+    let strings                 = obj_name_info.split('Error:');
+    let obj_name_               = strings.map(item => item.trim()).filter(item => item)[0];
+
+    snlog(obj, obj_name_, regExpMatchArrayElement[0], regExpMatchArrayElement[1], collapsed, level);
+
+    return;
+  }
+
+  if ('[object Error]' === Object.prototype.toString.call(filename)) {
+    let splitElement            = filename.stack.split('\n')[1];
+    let message                 = splitElement.substring(splitElement.lastIndexOf('/') + 1);
+    let regExpMatchArray        = message.match(/.*?:\d+/img);
+    let regExpMatchArrayElement = regExpMatchArray[0].split(':');
+    snlog(obj, obj_name, regExpMatchArrayElement[0], regExpMatchArrayElement[1], collapsed, level);
+    return;
+  }
+
   let group = collapsed ? console.groupCollapsed : console.group;
 
   if (level > 5) {
@@ -189,7 +224,7 @@ function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
       let content = '';
 
       if (filename && line) {
-        group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} | ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+        group(`\x1b[35m【${filename}:\x1b[0m\x1b[103m${line}\x1b[0m\x1b[35m】-: 🔍 ${obj_name} | ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
       } else {
         group();
       }
@@ -212,9 +247,10 @@ function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
       if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
 
       let emp = isEmpty(obj);
-      content = emp.empty ? `\x1b[104m "${emp.message}" \x1b[0m` : `\x1b[104m ${obj} \x1b[0m`;
+      content = emp.empty ? `\x1b[7m "${emp.message}" \x1b[0m` : `\x1b[7m ${obj} \x1b[0m`;
 
       console.log(info + content);
+      _endLine();
 
       break;
     }
@@ -226,7 +262,7 @@ function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
 
       if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
 
-      content = `\x1b[104m ${obj} \x1b[0m`;
+      content = `\x1b[7m ${obj} \x1b[0m`;
 
       console.log(info + content);
     }
@@ -234,7 +270,7 @@ function snlog (obj, obj_name, filename, line, collapsed = false, level = 0) {
 
 }
 
-function printJson (obj, obj_name, filename, line) {
+function printJson(obj, obj_name, filename, line) {
 
   let env; // true : browser false:node
   try {
@@ -250,7 +286,7 @@ function printJson (obj, obj_name, filename, line) {
   }
 }
 
-function printProperties (obj, obj_name, filename, line, level, key_name, collapsed) {
+function printProperties(obj, obj_name, filename, line, level, key_name, collapsed) {
 
   let group = collapsed ? console.groupCollapsed : console.group;
 
@@ -277,7 +313,7 @@ function printProperties (obj, obj_name, filename, line, level, key_name, collap
     // group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
     if (level === 1) {
 
-      group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
+      group(`\x1b[35m【${filename}:\x1b[0m\x1b[103m${line}\x1b[0m\x1b[35m】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
     } else {
       group(`\x1b[35m ${obj_name} : ${Object.prototype.toString.call(obj)} \x1b[0m`);
     }
@@ -397,9 +433,11 @@ function printProperties (obj, obj_name, filename, line, level, key_name, collap
 //   console.log(`${i} = \x1b[${i}m${'------------------------------------------------------'}\x1b[0m`);
 // }
 
-// exports.snlog           = snlog;
-// exports.hlog            = hlog;
-// exports.printJson       = printJson;
-// exports.printProperties = printProperties;
+exports.info            = info;
+exports.snlog           = snlog;
+exports.hlog            = hlog;
+exports.printJson       = printJson;
+exports.printProperties = printProperties;
 
-export {snlog, hlog, printProperties, printJson};
+// export {snlog, hlog, printProperties, printJson};
+
