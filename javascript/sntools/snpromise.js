@@ -76,6 +76,7 @@
 // snlog(path.join(__dirname, './log.js'), `path.resolve(__dirname,'.')`, 'snpromise.js', '72');
 
 const snlog = require('./log').snlog;
+const info  = require('./log').info;
 
 function demo1() {
   // console.log('■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■');
@@ -238,59 +239,79 @@ function demo1() {
   });
 }
 
-setImmediate(() => {snlog('[阶段3...immediate] immediate 回调1', `[阶段3...immediate] immediate 回调1`, 'snpromise.js', '243');});
-setImmediate(() => {snlog('[阶段3...immediate] immediate 回调2', `[阶段3...immediate] immediate 回调2`, 'snpromise.js', '243');});
-setImmediate(() => {snlog('[阶段3...immediate] immediate 回调3', `[阶段3...immediate] immediate 回调3`, 'snpromise.js', '243');});
+setImmediate(() => {snlog('[阶段3...immediate] immediate 回调1', new info);});
+setImmediate(() => {snlog('[阶段3...immediate] immediate 回调2', new info);});
+setImmediate(() => {snlog('[阶段3...immediate] immediate 回调3', new info);});
+
+setImmediate(() => {
+  snlog('[阶段3...immediate] immediate 回调4', new info);
+
+  process.nextTick(() => {snlog('[...待切入下一个阶段] immediate 回调4 增加的 nextTick 回调6', new info);});
+
+  snlog('[...待切入下一个阶段] 这块正在同步阻塞的读一个大文件', new info);
+
+  // 同步不建议写 , 除非是 项目入口的时候可以用一下, 不然全用异步
+  const video = fs.readFileSync('ccc.mp4');
+  console.log(video);
+
+  fs.readFile(path.resolve('ccc.mp4'), (err, data) => {
+    snlog('[阶段2...I/O 回调] immediate 回调4 中 增加的 读文件回调2', new info);
+
+    setImmediate(() => {snlog('[阶段3...immediate] immediate 回调4的 读文件回调2中 增加的 immediate 回调6', new info);});
+
+    setTimeout(function () {
+      snlog('[阶段3...定时器] 定时器回调8', new info);
+    }, 2);
+  });
+});
 
 Promise.resolve().then(() => {
-  snlog('[...待切入下一个阶段] Promise 回调1', `[...待切入下一个阶段] Promise 回调1`, 'snpromise.js', '246');
-  setImmediate(() => {snlog('[阶段3...immediate] immediate 回调4', `[阶段3...immediate] immediate 回调4`, 'snpromise.js', '247');});
-
+  snlog('[...待切入下一个阶段] Promise 回调1', new info);
+  setImmediate(() => {snlog('[阶段3...immediate] Promise 回调1 中 增加的 immediate 回调5', new info);});
 });
 
 var fs   = require('fs');
 var path = require('path');
 fs.readFile(path.resolve(__dirname, './log.js'), 'utf-8', function (err, data) {
   if (err) {console.log(err);}
-  snlog('[阶段2...readFile] readFile 回调1', `[阶段2...readFile] readFile 回调1`, 'snpromise.js', '255');
+  snlog('[阶段2...readFile] readFile 回调1', new info);
 
   fs.readFile(path.resolve('./ccc.mp4'), 'utf-8', function (err, data) {
     if (err) {console.log(err);}
-    snlog('[阶段2...readFile] readFile 回调2 大文件', `[阶段2...readFile] readFile 回调2 大文件`, 'snpromise.js', '259');
+    snlog('[阶段2...readFile] readFile 回调2 大文件', new info);
   });
 
   setImmediate(() => {
-    snlog('[阶段3...immediate] immediate 回调4', `[阶段3...immediate] immediate 回调5`, 'snpromise.js', '264');
+    snlog('[阶段3...immediate] immediate 回调4', new info);
 
     Promise.resolve().then(() => {
-      snlog('[...待切入下一个阶段] Promise 回调2', `[...待切入下一个阶段] Promise 回调2`, 'snpromise.js', '267');
+      snlog('[...待切入下一个阶段] Promise 回调2', new info);
       process.nextTick(() => {
-        snlog('[...待切入下一个阶段] nextTick 回调6', `[...待切入下一个阶段] nextTick 回调6`, 'snpromise.js', '268');
-      })
+        snlog('[...待切入下一个阶段] nextTick 回调6', new info);
+      });
     });
   });
 });
 
 // 可能还没有检测到 定时器的回调函数 , 有时 变为第一个 有时 变为最后一个
-setTimeout(() => {snlog('[阶段1...定时器] 定时器 回调1', `[阶段1...定时器] 定时器 回调1`, 'snpromise.js', '246');}, 2);
+setTimeout(() => {snlog('[阶段1...定时器] 定时器 回调1', new info);}, 2);
 setTimeout(() => {
-  snlog('[阶段1...定时器] 定时器 回调2', `[阶段1...定时器] 定时器 回调2`, 'snpromise.js', '248');
+  snlog('[阶段1...定时器] 定时器 回调2', new info);
 
   process.nextTick(() => {
-    snlog('[...待切入下一个阶段] nextTick 回调1', `[...待切入下一个阶段] nextTick 回调1`, 'snpromise.js', '251');
+    snlog('[...待切入下一个阶段] 定时器 回调2 中 增加的 nextTick 回调1', new info);
   });
 }, 2);
-
 setTimeout(() => {
-  snlog('[阶段1...定时器] 定时器 回调3', `[阶段1...定时器] 定时器 回调3`, 'snpromise.js', '256');
+  snlog('[阶段1...定时器] 定时器 回调3', new info);
 }, 2);
 setTimeout(() => {
-  snlog('[阶段1...定时器] 定时器 回调4', `[阶段1...定时器] 定时器 回调4`, 'snpromise.js', '258');
+  snlog('[阶段1...定时器] 定时器 回调4', new info);
 }, 2);
 
-process.nextTick(() => {snlog('[...待切入下一个阶段] nextTick 回调2', `[...待切入下一个阶段] nextTick 回调2`, 'snpromise.js', '262');});
+process.nextTick(() => {snlog('[...待切入下一个阶段] nextTick 回调2', new info);});
 process.nextTick(() => {
-  snlog('[...待切入下一个阶段] nextTick 回调3', `[...待切入下一个阶段] nextTick 回调3`, 'snpromise.js', '264');
-  process.nextTick(() => {snlog('[...待切入下一个阶段] nextTick 回调4', `[...待切入下一个阶段] nextTick 回调4`, 'snpromise.js', '268');});
+  snlog('[...待切入下一个阶段] nextTick 回调3', new info);
+  process.nextTick(() => {snlog('[...待切入下一个阶段] nextTick 回调4', new info);});
 });
-process.nextTick(() => {snlog('[...待切入下一个阶段] nextTick 回调5', `[...待切入下一个阶段] nextTick 回调5`, 'snpromise.js', '272');});
+process.nextTick(() => {snlog('[...待切入下一个阶段] nextTick 回调5', new info);});

@@ -3,7 +3,7 @@
 
 // const isEmpty = require('./type').isEmpty;
 const { isEmpty } = require('./type');
-const info        = require('./sninfo');
+// const info        = require('./sninfo');
 const sprintf     = require('sprintf-js').sprintf;
 const vsprintf    = require('sprintf-js').vsprintf;
 
@@ -38,7 +38,13 @@ function _isEmptyObject(obj) {
 };
 
 function _keyColor(key) {
-  return `\x1b[43m ${key} \x1b[0m`;
+  // return `\x1b[43m ${key} \x1b[0m`;
+  if (process.env.XPC_SERVICE_NAME !== '0') {
+    return `\x1b[43m ${key} \x1b[0m`;
+  } else {
+    // 终端
+    return `\x1b[1m ${key} \x1b[0m`;
+  }
 }
 
 function _arrowColor(arrow) {
@@ -47,12 +53,26 @@ function _arrowColor(arrow) {
 }
 
 function _objectColor(obj) {
-  return `\x1b[106m ${obj} \x1b[0m`;
+  // return `\x1b[106m ${obj} \x1b[0m`;
+
+  if (process.env.XPC_SERVICE_NAME !== '0') {
+    return `\x1b[106m ${obj} \x1b[0m`;
+  } else {
+    // 终端
+    return `\x1b[0m ${obj} \x1b[0m`;
+  }
 }
 
 function _funcColor(func) {
 
-  return `\x1b[34m ${func} \x1b[0m`;
+  // return `\x1b[34m ${func} \x1b[0m`;
+
+  if (process.env.XPC_SERVICE_NAME !== '0') {
+    return `\x1b[34m ${func} \x1b[0m`;
+  } else {
+    // 终端
+    return `\x1b[0m ${func} \x1b[0m`;
+  }
 }
 
 function _objNameColor(objName) {
@@ -149,6 +169,35 @@ function hlog(obj, obj_name, filename, line, level = 0) {
 //   console.log(`${i} = \x1b[${i}m${'hello world'}\x1b[0m`);
 // }
 
+function info_color(filename, line) {
+  // if (process.env.XPC_SERVICE_NAME.includes('jetbrains')) {
+  if (process.env.XPC_SERVICE_NAME !== '0') {
+    return `\x1b[102m ${filename}:${line} `;
+  } else {
+    // 终端
+    return `\x1b[1m${filename}:${line}`;
+  }
+}
+
+function obj_name_color(obj_name) {
+  // if (process.env.XPC_SERVICE_NAME.includes('jetbrains')) {
+  if (process.env.XPC_SERVICE_NAME !== '0') {
+    return `\x1b[103m ${obj_name} = \x1b[0m`;
+  } else {
+    // 终端
+    return `\x1b[1m${obj_name} = \x1b[0m`;
+  }
+}
+
+function obj_color(obj) {
+  if (process.env.XPC_SERVICE_NAME !== '0') {
+    return `\x1b[7m ${obj} \x1b[0m`;
+  } else {
+    // 终端
+    return `\x1b[1m${obj}\x1b[0m`;
+  }
+}
+
 function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
 
   if ('[object Error]' === Object.prototype.toString.call(obj_name)) {
@@ -243,11 +292,13 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
 
       let info    = '';
       let content = '';
-      if (filename && line) {console.log(`\x1b[102m ${filename}:${line} `);}
-      if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
+
+      if (filename && line) {console.log(info_color(filename, line));}
+
+      if (obj_name) {info = obj_name_color(obj_name);}
 
       let emp = isEmpty(obj);
-      content = emp.empty ? `\x1b[7m "${emp.message}" \x1b[0m` : `\x1b[7m ${obj} \x1b[0m`;
+      content = emp.empty ? obj_color(emp.message) : obj_color(obj);
 
       console.log(info + content);
       _endLine();
@@ -258,13 +309,14 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
     default: {
       let info    = '';
       let content = '';
-      if (filename && line) {console.log(`\x1b[102m ${filename}:${line} `);}
+      if (filename && line) {console.log(info_color(filename, line));}
 
-      if (obj_name) {info = `\x1b[103m${obj_name} = \x1b[0m`;}
+      if (obj_name) {info = obj_name_color(obj_name);}
 
-      content = `\x1b[7m ${obj} \x1b[0m`;
+      content = obj_color(obj);
 
       console.log(info + content);
+      _endLine();
     }
   }
 
@@ -433,11 +485,10 @@ function printProperties(obj, obj_name, filename, line, level, key_name, collaps
 //   console.log(`${i} = \x1b[${i}m${'------------------------------------------------------'}\x1b[0m`);
 // }
 
-exports.info            = info;
+// export {snlog, hlog, printProperties, printJson};
+
+exports.info            = Error;
 exports.snlog           = snlog;
 exports.hlog            = hlog;
 exports.printJson       = printJson;
 exports.printProperties = printProperties;
-
-// export {snlog, hlog, printProperties, printJson};
-
