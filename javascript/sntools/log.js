@@ -18,26 +18,26 @@ const dateformat = require('dateformat');
 //   console.log(chalk.bold('------------------------------------------------------'));
 // }
 
-function _endLine() {
+function _endLine () {
   // console.log('\x1b[92m------------------------------------------------------\x1b[0m');
 
   console.log('\x1b[1m' + '-'.repeat(90) + '\x1b[0m');
 }
 
-function _dateTime() {
+function _dateTime () {
   // return '@' + dateformat(new Date(), 'yyyy-MM-dd HH:mm:ss');
   let date = new Date();
   return '@' + dateformat(date, 'HH:mm:ss') + ':' + sprintf('%03d', date.getMilliseconds());
 }
 
-function _isEmptyObject(obj) {
+function _isEmptyObject (obj) {
   for (var key in obj) {
     return false;
   }
   return true;
 };
 
-function _keyColor(key) {
+function _keyColor (key) {
   // return `\x1b[43m ${key} \x1b[0m`;
   if (process.env.XPC_SERVICE_NAME !== '0') {
     return `\x1b[43m ${key} \x1b[0m`;
@@ -47,23 +47,33 @@ function _keyColor(key) {
   }
 }
 
-function _arrowColor(arrow) {
+function _arrowColor (arrow) {
 
   return '\x1b[39m' + arrow + '\x1b[0m';
 }
 
-function _objectColor(obj) {
+function _objectColor (obj) {
   // return `\x1b[106m ${obj} \x1b[0m`;
 
   if (process.env.XPC_SERVICE_NAME !== '0') {
-    return `\x1b[106m ${obj} \x1b[0m`;
+
+    if (typeof obj === 'string') {
+      return `\x1b[106m ${obj} \x1b[0m`;
+    } else {
+      return `\x1b[106m ${toString(obj)} \x1b[0m`;
+    }
   } else {
     // 终端
-    return `\x1b[0m ${obj} \x1b[0m`;
+    // return `\x1b[0m ${toString(obj)} \x1b[0m`;
+    if (typeof obj === 'string') {
+      return `\x1b[0m ${obj} \x1b[0m`;
+    } else {
+      return `\x1b[0m ${toString(obj)} \x1b[0m`;
+    }
   }
 }
 
-function _funcColor(func) {
+function _funcColor (func) {
 
   // return `\x1b[34m ${func} \x1b[0m`;
 
@@ -75,20 +85,20 @@ function _funcColor(func) {
   }
 }
 
-function _objNameColor(objName) {
+function _objNameColor (objName) {
   return `\x1b[90m${objName} : \x1b[0m`;
 
 }
 
-function getInnerHTML(level, key, show) {
+function getInnerHTML (level, key, show) {
   return `<pre style="padding-left: ${level * 20}px"><b style="color: red;background-color: yellow;font-weight: normal;">${key}</b> = ${show}</pre>`;
 }
 
-function getInnerHTMLWarn(level, key, show) {
+function getInnerHTMLWarn (level, key, show) {
   return `<pre style="padding-left: ${level * 20}px"><b style="color: yellow;background-color: orangered;font-weight: normal;">${key}</b> = ${show}</pre>`;
 }
 
-function hPrintProperties(obj, obj_name, container, level) {
+function hPrintProperties (obj, obj_name, container, level) {
 
   if (level > 3) {
     // console.warn('printProperties level ' + level + ' 层了');
@@ -133,12 +143,12 @@ function hPrintProperties(obj, obj_name, container, level) {
   }
 }
 
-function hPrintFunction(obj, obj_name, container, level) {
+function hPrintFunction (obj, obj_name, container, level) {
   container.innerHTML += `<pre style="position: relative; left: 0; top: 0;padding-left: ${level * 20}px;margin-bottom: 10px;">
 <div style="position: absolute; left: 0; top: 0;width: ${level * 20}px; height: 100%;border-right: 1px dotted #000;"></div> <b style="color: darkcyan;background-color: yellow;font-weight: normal;">${obj_name}</b> = <b style="color: blue;font-weight: normal">${obj}</b></pre>`;
 }
 
-function hlog(obj, obj_name, filename, line, level = 0) {
+function hlog (obj, obj_name, filename, line, level = 0) {
   let h3       = document.createElement('h4');
   h3.innerHTML = `【${filename}:${line}】-: 🔍 <b style="color: #008B8B;">${obj_name}</b> | type = 【${typeof obj}】` + _dateTime();
   document.body.appendChild(h3);
@@ -169,27 +179,35 @@ function hlog(obj, obj_name, filename, line, level = 0) {
 //   console.log(`${i} = \x1b[${i}m${'hello world'}\x1b[0m`);
 // }
 
-function info_color(filename, line) {
+function info_color (filename, line, error) {
   // if (process.env.XPC_SERVICE_NAME.includes('jetbrains')) {
   if (process.env.XPC_SERVICE_NAME !== '0') {
-    return `\x1b[102m ${filename}:${line} `;
+    // return `\x1b[102m ${filename}:${line} `;
+    if (error) {
+      return `\x1b[101m ${filename}:${line} `;
+    } else {
+      return `\x1b[102m ${filename}:${line} `;
+    }
+
   } else {
     // 终端
     return `\x1b[1m${filename}:${line}`;
   }
 }
 
-function obj_name_color(obj_name) {
+function obj_name_color (obj_name, error) {
   // if (process.env.XPC_SERVICE_NAME.includes('jetbrains')) {
   if (process.env.XPC_SERVICE_NAME !== '0') {
+
     return `\x1b[103m ${obj_name} = \x1b[0m`;
+
   } else {
     // 终端
     return `\x1b[1m${obj_name} = \x1b[0m`;
   }
 }
 
-function obj_color(obj) {
+function obj_color (obj) {
   if (process.env.XPC_SERVICE_NAME !== '0') {
     return `\x1b[7m ${obj} \x1b[0m`;
   } else {
@@ -198,7 +216,13 @@ function obj_color(obj) {
   }
 }
 
-function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
+function snlog (obj, obj_name, filename, line, collapsed = false, level = 0, error = false) {
+
+  if (filename === 1) {
+    console.log('没进来吧???');
+    snlog(obj, obj_name, 0, line, collapsed, level, true);
+    return;
+  }
 
   if ('[object Error]' === Object.prototype.toString.call(obj_name)) {
     let obj_name_info = obj_name.stack.split('\n')[0];
@@ -212,7 +236,7 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
     let strings                 = obj_name_info.split('Error:');
     let obj_name_               = strings.map(item => item.trim()).filter(item => item)[0];
 
-    snlog(obj, obj_name_, regExpMatchArrayElement[0], regExpMatchArrayElement[1], collapsed, level);
+    snlog(obj, obj_name_, regExpMatchArrayElement[0], regExpMatchArrayElement[1], collapsed, level, error);
 
     return;
   }
@@ -222,7 +246,7 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
     let message                 = splitElement.substring(splitElement.lastIndexOf('/') + 1);
     let regExpMatchArray        = message.match(/.*?:\d+/img);
     let regExpMatchArrayElement = regExpMatchArray[0].split(':');
-    snlog(obj, obj_name, regExpMatchArrayElement[0], regExpMatchArrayElement[1], collapsed, level);
+    snlog(obj, obj_name, regExpMatchArrayElement[0], regExpMatchArrayElement[1], collapsed, level, error);
     return;
   }
 
@@ -253,6 +277,7 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
     return;
   }
 
+
   // let t = Object.prototype.toString.call(obj);
   let t = typeof obj;
 
@@ -260,6 +285,7 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
     case 'object': {
 
       let empty = isEmpty(obj);
+
 
       if (empty.empty) {return console.log(empty.message, obj);}
 
@@ -293,7 +319,7 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
       let info    = '';
       let content = '';
 
-      if (filename && line) {console.log(info_color(filename, line));}
+      if (filename && line) {console.log(info_color(filename, line, error));}
 
       if (obj_name) {info = obj_name_color(obj_name);}
 
@@ -309,7 +335,7 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
     default: {
       let info    = '';
       let content = '';
-      if (filename && line) {console.log(info_color(filename, line));}
+      if (filename && line) {console.log(info_color(filename, line, error));}
 
       if (obj_name) {info = obj_name_color(obj_name);}
 
@@ -322,7 +348,7 @@ function snlog(obj, obj_name, filename, line, collapsed = false, level = 0) {
 
 }
 
-function printJson(obj, obj_name, filename, line) {
+function printJson (obj, obj_name, filename, line) {
 
   let env; // true : browser false:node
   try {
@@ -338,7 +364,7 @@ function printJson(obj, obj_name, filename, line) {
   }
 }
 
-function printProperties(obj, obj_name, filename, line, level, key_name, collapsed) {
+function printProperties (obj, obj_name, filename, line, level, key_name, collapsed) {
 
   let group = collapsed ? console.groupCollapsed : console.group;
 
@@ -364,7 +390,6 @@ function printProperties(obj, obj_name, filename, line, level, key_name, collaps
   if (filename && line) {
     // group(`\x1b[35m【${filename}:${line}】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
     if (level === 1) {
-
       group(`\x1b[35m【${filename}:\x1b[0m\x1b[103m${line}\x1b[0m\x1b[35m】-: 🔍 ${obj_name} ${Object.prototype.toString.call(obj)}\x1b[0m`, _dateTime());
     } else {
       group(`\x1b[35m ${obj_name} : ${Object.prototype.toString.call(obj)} \x1b[0m`);
@@ -374,6 +399,7 @@ function printProperties(obj, obj_name, filename, line, level, key_name, collaps
   }
 
   let empty = isEmpty(obj);
+
   if (empty.empty) {return console.log(empty.message, obj);}
 
   for (let key in obj) {
@@ -471,7 +497,11 @@ function printProperties(obj, obj_name, filename, line, level, key_name, collaps
 
       default: {
         if (key_name) {info = _objNameColor(key_name);}
+
+
         content = _keyColor(key) + _arrowColor('=>') + _objectColor(obj[key]);
+
+        // content = 'hello world'
       }
     }
 

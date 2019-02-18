@@ -80,16 +80,16 @@ export {sn_insert, sn_remove, to_a, to_o};
 //   const snlog = require('./log').snlog;
 //
 //   var number = [3, 10, 18, 20].find(age => age >= 18);
-//   snlog(number, `number`, 'array.js', '72');
+//   snlog(number, `number`, 'array_t.js', '72');
 //
 //   var index = [3, 10, 18, 20].findIndex(age => age >= 18);
-//   snlog(index, `index`, 'array.js', '76');
+//   snlog(index, `index`, 'array_t.js', '76');
 //
 //   var array = Array.from('hello world');
-//   snlog(array, `array`, 'array.js', '79');
+//   snlog(array, `array`, 'array_t.js', '79');
 //
 //   var array = [...'hello stone'];
-//   snlog(array, `array`, 'array.js', '83');
+//   snlog(array, `array`, 'array_t.js', '83');
 //
 //   var message = [1, 2, 3].includes(3);
 //   console.log(message);
@@ -98,7 +98,7 @@ export {sn_insert, sn_remove, to_a, to_o};
 //   snlog(fruits.indexOf('Apple', 3), `fruits.indexOf("Apple")`, 'array_test.js', '120');
 //   snlog(fruits.lastIndexOf('Apple'), `fruits.lastIndexOf("Apple")`, 'array_test.js', '121');
 //
-//   snlog(Array.isArray(fruits), `Array.isArray(fruits)`, 'array.js', '90');
+//   snlog(Array.isArray(fruits), `Array.isArray(fruits)`, 'array_t.js', '90');
 //
 //   // every() 方法用于检测数组所有元素是否都符合指定条件（通过函数提供）。
 //   //
@@ -107,7 +107,7 @@ export {sn_insert, sn_remove, to_a, to_o};
 //   // 如果数组中检测到有一个元素不满足，则整个表达式返回 false ，且剩余的元素不会再进行检测。
 //   // 如果所有元素都满足条件，则返回 true。
 //
-//   snlog([32, 33, 16, 40].every(age => age >= 18), `[32, 33, 16, 40].every(age => age >= 18)`, 'array.js', '95');
+//   snlog([32, 33, 16, 40].every(age => age >= 18), `[32, 33, 16, 40].every(age => age >= 18)`, 'array_t.js', '95');
 //
 //   // some() 方法用于检测数组中的元素是否满足指定条件（函数提供）。
 //   //
@@ -115,7 +115,7 @@ export {sn_insert, sn_remove, to_a, to_o};
 //   //
 //   // 如果有一个元素满足条件，则表达式返回true , 剩余的元素不会再执行检测。
 //   // 如果没有满足条件的元素，则返回false。
-//   snlog([32, 33, 16, 40].some(age => age >= 18), `[32, 33, 16, 40].some(age => age >= 18)`, 'array.js', '110');
+//   snlog([32, 33, 16, 40].some(age => age >= 18), `[32, 33, 16, 40].some(age => age >= 18)`, 'array_t.js', '110');
 //
 // }
 

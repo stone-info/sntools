@@ -20,6 +20,8 @@ function isEmpty (obj) {
 
   switch (Object.prototype.toString.call(obj)) {
     case '[object Object]': {
+
+
       let flag = true;
       for (let key in obj) {
         flag = false;
