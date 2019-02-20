@@ -5,6 +5,15 @@ var progress   = require('request-progress');
 const sprintf  = require('sprintf-js').sprintf;
 const vsprintf = require('sprintf-js').vsprintf;
 
+function getImageName (url) {
+
+  let [m] = url.match(/\/.*(png|jpg|jpeg|gif)/smgi);
+
+  let filename = m.substring(m.lastIndexOf('/') + 1);
+
+  return filename;
+}
+
 function downloadImageParallel (url, filepath) {
 
   filepath = '/Users/stone/Desktop/image_download/' + filepath;
@@ -117,6 +126,7 @@ function downloadZipParallel (url, filepath, filename) {
 //   // });
 // })();
 
+exports.getImageName          = getImageName;
 exports.downloadImage         = downloadImage;
 exports.downloadImageParallel = downloadImageParallel;
 exports.downloadZipParallel   = downloadZipParallel;
